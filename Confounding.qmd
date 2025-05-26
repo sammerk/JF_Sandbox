@@ -1,5 +1,5 @@
 ---
-title: "Confounded Mean Differences"
+title: "Confounding"
 subtitle: "Simulation of a Regression Analysis"
 format: 
   html:
