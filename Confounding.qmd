@@ -49,7 +49,7 @@ data <- tibble(
 
 ## Regression Analysis
 
-I we have data for the confounder simple multiple regression does the job:
+If we have data for the confounder simple multiple regression does the job of uncovering the confounding:
 
 ```{r}
 library(sjPlot)
