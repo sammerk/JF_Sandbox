@@ -36,7 +36,7 @@ n <- 1000
 
 # Simulate confounder
 data <- tibble(
-  # Start with a purly dependent variable
+  # Start with a purly independent variable
   Depressiveness = rnorm(n, mean = 0, sd = 1),
   # Add the two variables that are dependent on the confounder
   Absentism_1 = rnorm(n, mean = 0, sd = 1) + .25 * Depressiveness,
