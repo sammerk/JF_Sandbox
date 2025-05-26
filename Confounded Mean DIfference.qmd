@@ -1,0 +1,86 @@
+---
+title: "Confounded Mean Differences"
+subtitle: "Simulation of a Regression Analysis"
+format: 
+  html:
+    toc: true
+    brand: _brand.yml
+editor: visual
+---
+
+## Data Generating Mechanism
+
+Let's assume, we have a time invariant confounder $Depressiveness$ which affects two variables assessed at two time points $Absentism_{1}$, $Absentism_{2}$, $Screentime_{1}$, $Screentime_{2}$.
+
+```{mermaid}
+flowchart LR
+  A1[Absentism₁] --> A2[Absentism₂]
+  L1[Screentime₁] --> L2[Screentime₂]
+  C[Depressiveness] --> A1
+  C[Depressiveness] --> A2
+  C[Depressiveness] --> L1
+  C[Depressiveness] --> L2
+```
+
+> Note: We assume no effects of $Absentism_1$ on $Screentime_2$ and of $Screentime_1$ on $Absentism_2$.
+
+## Simulate Data
+
+```{r}
+#| label: data sim
+#| message: false
+#| warning: false
+library(tidyverse)
+set.seed(1896)
+n <- 1000
+
+# Simulate confounder
+data <- tibble(
+  # Start with a purly dependent variable
+  Depressiveness = rnorm(n, mean = 0, sd = 1),
+  # Add the two variables that are dependent on the confounder
+  Absentism_1 = rnorm(n, mean = 0, sd = 1) + .25 * Depressiveness,
+  Screentime_1 = rnorm(n, mean = 0, sd = 1) + .25 * Depressiveness,
+  # Add the two variables that are dependent on the confounder and on each other 
+  Absentism_2 = rnorm(n, mean = 0, sd = 1) + .25 * Depressiveness + .5*Absentism_1,
+  Screentime_2 = rnorm(n, mean = 0, sd = 1) + .25 * Depressiveness + .5*Screentime_1,
+)
+```
+
+## Regression Analysis
+
+I we have data for the confounder simple multiple regression does the job:
+
+```{r}
+library(sjPlot)
+tab_model(
+    lm(Absentism_2 ~ Screentime_1, data = data),
+    lm(Absentism_2 ~ Depressiveness, data = data),
+    lm(Absentism_2 ~ Screentime_1 + Depressiveness, data = data),
+    show.ci = F,
+    show.std = T
+)
+
+```
+
+But what if we do not have data for the confounder? De-meaning/person-centering will help:
+
+```{r}
+data <- data %>%
+  mutate(
+    Absentism_1_pc = Absentism_1 - rowMeans(pick(Absentism_1, Absentism_2)),
+    Absentism_2_pc = Absentism_2 - rowMeans(pick(Absentism_1, Absentism_2)),
+    Screentime_1_pc = Screentime_1 - rowMeans(pick(Screentime_1, Screentime_2)),
+    Screentime_2_pc = Screentime_2 - rowMeans(pick(Screentime_1, Screentime_2))
+  )
+
+tab_model(
+    lm(Absentism_2_pc ~ Screentime_1_pc, data = data),
+    show.ci = F,
+    show.std = T
+)
+```
+
+But how does this work? Maybe the following worked out example will help you to build an intuition:
+
+![](img/DeMeaning.svg){.lightbox}

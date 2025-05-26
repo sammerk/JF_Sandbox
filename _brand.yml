@@ -1,0 +1,50 @@
+logo: 
+  medium: img/logo.png
+
+typography:
+  fonts:
+    - family: "Alegreya Sans"
+      source: google
+  base: 
+    family: "Alegreya Sans"
+  headings: 
+    family: "Alegreya Sans"
+    color: "#267326"
+  
+color:
+  foreground: "#174717"
+  background: "#F2F2F2"
+  primary: "#267326"
+  danger: pink    
+  link: "#267326"
+
+
+  
+defaults:
+  quarto:
+    format:
+      # basic format-specific settings
+      html:
+      revealjs:
+        controls: true
+        template-partials:
+          - _template/title-slide.html
+        menu: true
+        highlight-style: github-dark
+        theme: _template/phka.scss
+        tbl-cap-location: bottom
+        lightbox: auto
+        auto-stretch: false
+        embed-resources: true
+        picture: img/KA.jpeg
+        logo: img/ph-logo.svg
+        footer: Samuel Merk | Pädagogische Hochschule Karlsruhe
+        bibliography: references.bib
+        csl: _template/apa.csl
+
+
+
+
+
+
+
