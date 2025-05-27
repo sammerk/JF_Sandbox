@@ -31,7 +31,7 @@ flowchart LR
 #| message: false
 #| warning: false
 library(tidyverse)
-set.seed(1896)
+set.seed(2705)
 n <- 1000
 
 # Simulate confounder
@@ -84,3 +84,66 @@ tab_model(
 But how does this work? Maybe the following worked out example will help you to build an intuition:
 
 ![](img/DeMeaning.svg){.lightbox}
+
+## Monte Carlo Simulation
+### Simulate Data and Rerun Analyses
+If you change the seed above and run the code again you will see that the results of the regression analysis change and even the *p*-values become significant sometimes. To test if the adjustment for `Depressiveness_₁` works *on avergage* a Monte Carlo Simulation can be used:
+
+```{r}
+#| label: monte carlo
+library(broom)
+
+# initiate two empty vector to store the results (p-value and regression weight)
+b_depressiveness <- numeric(0)
+p_depressiveness <- numeric(0)
+
+# now run the Monte Carlo Simulation by repeating the data simulation and 
+# regression analysis 10000 times (takes a minute) and store the results each time
+
+for (i in 1:10000){
+  # Simulate confounder
+data_i <- 
+  tibble(
+    Depressiveness = rnorm(n, mean = 0, sd = 1),
+    Absentism_1 = rnorm(n, mean = 0, sd = 1) + .25 * Depressiveness,
+    Screentime_1 = rnorm(n, mean = 0, sd = 1) + .25 * Depressiveness,
+    Absentism_2 = rnorm(n, mean = 0, sd = 1) + .25 * Depressiveness + .5*Absentism_1,
+    Screentime_2 = rnorm(n, mean = 0, sd = 1) + .25 * Depressiveness + .5*Screentime_1)%>%
+  mutate(
+    Absentism_1_pc = Absentism_1 - rowMeans(pick(Absentism_1, Absentism_2)),
+    Absentism_2_pc = Absentism_2 - rowMeans(pick(Absentism_1, Absentism_2)),
+    Screentime_1_pc = Screentime_1 - rowMeans(pick(Screentime_1, Screentime_2)),
+    Screentime_2_pc = Screentime_2 - rowMeans(pick(Screentime_1, Screentime_2))
+  )
+
+mod_i <- lm(Absentism_2_pc ~ Screentime_1_pc, data = data_i)
+
+b_depressiveness[i] <- 
+  tidy(mod_i) %>% 
+    filter(term == "Screentime_1_pc") %>% 
+    pull("estimate") %>% 
+    as.numeric()
+
+p_depressiveness[i] <- 
+  tidy(mod_i) %>% 
+    filter(term == "Screentime_1_pc") %>% 
+    pull("p.value")
+}
+```
+
+### Plot the results
+```{r}
+library(patchwork)
+tibble(regression_weights = b_depressiveness) %>% 
+  ggplot(aes(regression_weights)) +
+    geom_histogram() +
+    theme_minimal() +
+    ggtitle("Regression Weights") +
+tibble(p_values = p_depressiveness) %>% 
+  ggplot(aes(p_values)) +
+    geom_histogram() +
+    theme_minimal() +
+    ggtitle("p-values")
+           
+```
+
