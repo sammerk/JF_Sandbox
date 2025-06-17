@@ -15,7 +15,7 @@ Let's assume, we want to test, how precise we can estimate $\mu$ of a $\mathcal{
 
 ::: {.panel-tabset}
 
-## Strategy:
+## Strategy
 A reasonable Monte Carlo approach would be to 
 
 1) simulate a data set,
@@ -107,3 +107,13 @@ GGally::ggpairs(sim_results)
 
 
 ## Example 2: "Power" of Bayesian t-Test
+::: {.panel-tabset}
+
+## Strategy
+
+
+## Step 1
+
+Content for Tab B
+
+:::
