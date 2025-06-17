@@ -1,0 +1,109 @@
+---
+title: "Monte Carlo Based Precision or Power Analyses"
+subtitle: "Using (amongst others) `{brms}`"
+format: 
+  html:
+    toc: true
+    brand: _brand.yml
+    html-math-method: mathjax
+editor: visual
+---
+
+
+## Example 1: Precision of Mean Estimate
+Let's assume, we want to test, how precise we can estimate $\mu$ of a $\mathcal{N}(500, 100)$ distributed variable with a sample size of $N = 400$. 
+
+::: {.panel-tabset}
+
+## Strategy:
+A reasonable Monte Carlo approach would be to 
+
+1) simulate a data set,
+2) estimate $\mu$,
+3) estimate the inferential uncertainity around $\mu$ (e.g. SE or CI)
+4) repeat steps 1-3 1.000  (or better 10.000) times and
+5) summarize the results.
+
+
+## Step 1
+
+```{r}
+library(tidyverse)
+set.seed(31415)
+data_sim <- tibble(y = rnorm(400, 500, 100))
+```
+
+## Step 2 & 3
+There are--of course--serveral options. As regression is a very universial tool, we will go with an intercept only model:
+
+```{r}
+#| cache: true
+library(brms)
+library(broom.mixed)
+
+# frequentist approach
+model_freq <- lm(y ~ 1, data = data_sim)
+se_freq <- tidy(model_freq)$std.error
+
+# bayesian approach
+model_bayes <- brm(y ~ 1, data = data_sim)
+cilow_bayes <- tidy(model_bayes)$conf.low
+cihigh_bayes <- tidy(model_bayes)$conf.high
+```
+
+## Step 4
+Running 100s of iterations of a `{brms}` model is slow due to two reasons:
+
+* the compilation takes time
+* running the Marcov Chains to estimate and sample from the posterior takes time
+
+Luckily, in `{brms}` we can use already compiled models and run them with newly simulated data:
+
+
+```{r}
+#| cache: true
+#| results: hide
+#| warning: false
+#| message: false
+
+# initialize empty nuemric vectors to store the sim results
+se_freq_simresult <- numeric(0)
+cilow_bayes_simresult <- numeric(0)
+cihigh_bayes_simresult <- numeric(0)
+
+
+# start a for-loop which runs step 1-3 100 times
+
+for (i in 1:100){
+    #data
+    data_i <- tibble(y = rnorm(400, 500, 100))
+    
+    # frew
+    model_freq_i <- lm(y ~ 1, data = data_i)
+    se_freq_simresult[i] <- tidy(model_freq_i)$std.error
+    
+    # bayes
+    model_bayes_i <- update(model_bayes,          # using already compiled model
+                            newdata = data_i)
+    cilow_bayes_simresult[i] <- tidy(model_bayes_i)$conf.low
+    cihigh_bayes_simresult[i] <- tidy(model_bayes_i)$conf.high
+}
+
+```
+
+## Step 5
+```{r}
+sim_results <- 
+    tibble(se_freq_simresult = se_freq_simresult,
+           cilow_bayes_simresult = cilow_bayes_simresult,
+           cihigh_bayes_simresult = cihigh_bayes_simresult)
+
+GGally::ggpairs(sim_results)
+```
+
+
+:::
+
+
+
+## Example 2: "Power" of Bayesian t-Test

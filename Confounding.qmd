@@ -5,6 +5,7 @@ format:
   html:
     toc: true
     brand: _brand.yml
+    html-math-method: mathjax
 editor: visual
 ---
 
