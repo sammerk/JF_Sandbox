@@ -111,9 +111,15 @@ GGally::ggpairs(sim_results)
 
 ## Strategy
 
+* ...
+* ...  
+
 
 ## Step 1
 
-Content for Tab B
+```{r}
+# your code
+```
+
 
 :::
